@@ -20,7 +20,8 @@ async function fetchData() {
                 };
             });
 
-        displayData(parsedRows);
+        const nextPickups = calculateNextPickups(parsedRows);
+        displayData(parsedRows, nextPickups);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -37,7 +38,23 @@ function calculateDaysUntil(today, futureDate) {
     return Math.ceil(timeDifference / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
 }
 
-function displayData(data) {
+// Find the next pickup for each category
+function calculateNextPickups(data) {
+    const today = new Date();
+    const nextPickups = {};
+
+    data.forEach(item => {
+        if (item.date > today) {
+            if (!nextPickups[item.category] || item.date < nextPickups[item.category]) {
+                nextPickups[item.category] = item.date;
+            }
+        }
+    });
+
+    return nextPickups;
+}
+
+function displayData(data, nextPickups) {
     const container = document.getElementById('pickup-data');
     container.innerHTML = `
         <table border="1">
@@ -50,7 +67,7 @@ function displayData(data) {
             </thead>
             <tbody>
                 ${data.map(item => `
-                    <tr>
+                    <tr style="${item.date && nextPickups[item.category] === item.date ? 'font-weight: bold;' : ''}">
                         <td>${item.category}</td>
                         <td>${item.date ? item.date.toDateString() : 'Invalid Date'}</td>
                         <td>${item.daysUntil !== null ? (item.daysUntil >= 0 ? item.daysUntil : 'Passed') : 'N/A'}</td>
