@@ -1,14 +1,14 @@
-// script.js
-
 async function fetchData() {
     try {
         const response = await fetch('data/pickup_dates_2025_cleaned.csv');
         const data = await response.text();
         const rows = data.split('\n').slice(1); // Skip the header
-        const parsedData = rows.map(row => {
-            const [category, date] = row.split(',');
-            return { category, date };
-        });
+        const parsedData = rows
+            .filter(row => row.trim() !== '') // Remove empty lines
+            .map(row => {
+                const [category, date] = row.split(',');
+                return { category: category.trim(), date: date.trim() };
+            });
 
         displayData(parsedData);
     } catch (error) {
