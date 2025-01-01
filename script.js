@@ -7,20 +7,37 @@ async function fetchData() {
             .filter(row => row.trim() !== '') // Remove empty lines
             .map(row => {
                 const [category, date] = row.split(',');
-                return { category: category.trim(), date: date.trim() };
+                return { category: category.trim(), date: new Date(date.trim()) };
             });
 
-        displayData(parsedData);
+        const nextPickups = calculateNextPickups(parsedData);
+        displayData(nextPickups);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 }
 
+function calculateNextPickups(data) {
+    const today = new Date();
+    const nextPickups = {};
+
+    data.forEach(item => {
+        if (item.date > today) {
+            if (!nextPickups[item.category] || item.date < nextPickups[item.category]) {
+                nextPickups[item.category] = item.date;
+            }
+        }
+    });
+
+    return nextPickups;
+}
+
 function displayData(data) {
     const container = document.getElementById('pickup-data');
-    container.innerHTML = data.map(item => 
-        `<div>${item.category}: ${item.date}</div>`
-    ).join('');
+    container.innerHTML = Object.entries(data)
+        .map(([category, date]) => 
+            `<div>${category}: ${date.toDateString()}</div>`
+        ).join('');
 }
 
 fetchData();
