@@ -9,6 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
         statusDiv.textContent = message;
     }
 
+    // Display debug information on the page
+    function debugOutput(label, data) {
+        const pre = document.createElement("pre");
+        pre.textContent = `${label}:\n${JSON.stringify(data, null, 2)}`;
+        outputDiv.appendChild(pre);
+    }
+
     // Fetch and process the CSV data
     fetch(csvUrl)
         .then(response => {
@@ -30,8 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 return { category, date: new Date(date) };
             });
 
+            debugOutput("Parsed Data", data);
+
             updateStatus("Data parsed successfully. Calculating next pickups...");
             const nextPickups = calculateNextPickups(data, today);
+
+            debugOutput("Next Pickups", nextPickups);
+
             displayResults(nextPickups);
         })
         .catch(error => {
@@ -65,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Display results in a simple format
     function displayResults(nextPickups) {
         updateStatus("Next pickups calculated. Displaying results...");
-        outputDiv.innerHTML = nextPickups
+        outputDiv.innerHTML += nextPickups
             .map(pickup => 
                 `<p><strong>${pickup.category}:</strong> ${pickup.date} (${pickup.daysUntil} days left)</p>`)
             .join("");
