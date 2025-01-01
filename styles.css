@@ -1,13 +1,17 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
+table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-h1 {
-    color: #2c3e50;
+th, td {
+    padding: 10px;
+    text-align: left;
 }
 
-#pickup-data {
-    margin-top: 20px;
-    font-size: 18px;
+tr {
+    transition: background-color 0.2s ease;
+}
+
+tr:hover {
+    background-color: #f9f9f9;
 }
