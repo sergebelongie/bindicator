@@ -21,7 +21,7 @@ async function fetchData() {
             });
 
         const nextPickups = calculateNextPickups(parsedRows);
-        displayData(parsedRows, nextPickups);
+        displayData(nextPickups);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -45,16 +45,16 @@ function calculateNextPickups(data) {
 
     data.forEach(item => {
         if (item.date > today) {
-            if (!nextPickups[item.category] || item.date < nextPickups[item.category]) {
-                nextPickups[item.category] = item.date;
+            if (!nextPickups[item.category] || item.date < nextPickups[item.category].date) {
+                nextPickups[item.category] = { ...item };
             }
         }
     });
 
-    return nextPickups;
+    return Object.values(nextPickups); // Return only the next pickup for each category
 }
 
-function displayData(data, nextPickups) {
+function displayData(data) {
     const container = document.getElementById('pickup-data');
     container.innerHTML = `
         <table border="1">
@@ -67,10 +67,10 @@ function displayData(data, nextPickups) {
             </thead>
             <tbody>
                 ${data.map(item => `
-                    <tr style="${item.date && nextPickups[item.category] === item.date ? 'font-weight: bold;' : ''}">
+                    <tr>
                         <td>${item.category}</td>
-                        <td>${item.date ? item.date.toDateString() : 'Invalid Date'}</td>
-                        <td>${item.daysUntil !== null ? (item.daysUntil >= 0 ? item.daysUntil : 'Passed') : 'N/A'}</td>
+                        <td>${item.date.toDateString()}</td>
+                        <td>${item.daysUntil >= 0 ? item.daysUntil : 'Passed'}</td>
                     </tr>
                 `).join('')}
             </tbody>
