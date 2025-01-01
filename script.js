@@ -1,45 +1,55 @@
-// Path to the CSV file
-const csvFilePath = "data/pickup_dates_2025.csv";
+const csvFilePath = "data/pickup_dates_2025_cleaned.csv";
 
 // Function to calculate days until a given date
 function daysUntilPickup(pickupDate) {
   const today = new Date(); // Current date
-  const pickup = new Date(pickupDate);
+  const pickup = new Date(pickupDate.trim());
   const diffTime = pickup - today;
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert ms to days
 }
 
-// Fetch and parse the CSV file
+// Fetch and process the CSV file
 fetch(csvFilePath)
   .then(response => response.text())
   .then(csvText => {
-    const rows = csvText.split("\n").slice(1); // Skip the header
-    const tableBody = document.querySelector("#pickup-table tbody");
+    const rows = csvText.split("\n").slice(1); // Skip the header row
+    const data = {}; // Object to store the next pickup for each category
 
     rows.forEach(row => {
-      const [category, date] = row.split(","); // Split row into category and date
-      if (category && date) {
-        // Create a table row
-        const tableRow = document.createElement("tr");
+      const [category, date] = row.split(","); // Split each row into category and date
+      if (!category || !date) return; // Skip empty rows
+      const pickupDate = new Date(date.trim()); // Convert date string to Date object
+      const days = daysUntilPickup(date);
 
-        // Category cell
-        const categoryCell = document.createElement("td");
-        categoryCell.textContent = category;
-        tableRow.appendChild(categoryCell);
-
-        // Date cell
-        const dateCell = document.createElement("td");
-        dateCell.textContent = date.trim();
-        tableRow.appendChild(dateCell);
-
-        // Days until pickup cell
-        const daysCell = document.createElement("td");
-        daysCell.textContent = daysUntilPickup(date.trim());
-        tableRow.appendChild(daysCell);
-
-        // Append the row to the table
-        tableBody.appendChild(tableRow);
+      // Update the next pickup if:
+      // 1. The category doesn't exist in the data object yet
+      // 2. This date is sooner than the currently stored date
+      if (!data[category] || pickupDate < new Date(data[category].date)) {
+        data[category] = { date: pickupDate.toLocaleDateString(), days };
       }
     });
+
+    // Populate the table with the next pickup dates
+    const tableBody = document.querySelector("#pickup-table tbody");
+    for (const [category, { date, days }] of Object.entries(data)) {
+      const row = document.createElement("tr");
+
+      // Category cell
+      const categoryCell = document.createElement("td");
+      categoryCell.textContent = category;
+      row.appendChild(categoryCell);
+
+      // Date cell
+      const dateCell = document.createElement("td");
+      dateCell.textContent = date;
+      row.appendChild(dateCell);
+
+      // Days until pickup cell
+      const daysCell = document.createElement("td");
+      daysCell.textContent = days >= 0 ? days : "Past";
+      row.appendChild(daysCell);
+
+      tableBody.appendChild(row);
+    }
   })
   .catch(error => console.error("Error loading CSV file:", error));
