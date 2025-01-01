@@ -8,36 +8,59 @@ function daysUntilPickup(pickupDate) {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert ms to days
 }
 
+// Function to append debug messages to the page
+function logDebug(message) {
+  const debugDiv = document.getElementById("debug-output");
+  const debugMessage = document.createElement("p");
+  debugMessage.textContent = message;
+  debugDiv.appendChild(debugMessage);
+}
+
 // Fetch and process the CSV file
 fetch(csvFilePath)
   .then(response => response.text())
   .then(csvText => {
+    logDebug("CSV Loaded:");
+    logDebug(csvText); // Log the raw CSV contents
+
     const rows = csvText.split("\n").slice(1); // Skip the header row
+    logDebug(`Number of Rows: ${rows.length}`);
+
     const data = {}; // Object to store the next pickup for each category
 
     rows.forEach(row => {
       const [category, date] = row.split(","); // Split each row into category and date
-      if (!category || !date) return; // Skip empty rows
+      logDebug(`Processing Row: Category = ${category}, Date = ${date}`);
 
-      const pickupDate = new Date(date.trim()); // Convert date string to Date object
-      if (isNaN(pickupDate)) return; // Skip invalid dates
+      if (!category || !date) {
+        logDebug("Skipping empty or invalid row.");
+        return; // Skip empty rows
+      }
 
-      // Only include future pickup dates
+      const pickupDate = new Date(date.trim());
+      if (isNaN(pickupDate)) {
+        logDebug(`Invalid date encountered: ${date}`);
+        return; // Skip invalid dates
+      }
+
       if (pickupDate >= new Date()) {
-        // Update the next pickup if:
-        // 1. The category doesn't exist in the data object yet
-        // 2. This date is sooner than the currently stored date
+        // Check if this is the earliest pickup date for the category
         if (!data[category] || pickupDate < new Date(data[category].date)) {
           data[category] = { date: pickupDate.toISOString().split("T")[0], days: daysUntilPickup(date) };
         }
       }
     });
 
+    logDebug("Final Data Object:");
+    logDebug(JSON.stringify(data, null, 2));
+
     // Populate the table with the next pickup dates
     const tableBody = document.querySelector("#pickup-table tbody");
     tableBody.innerHTML = ""; // Clear the table
 
     Object.entries(data).forEach(([category, { date, days }]) => {
+      logDebug(`Adding Row: Category = ${category}, Date = ${date}, Days = ${days}`);
+
       const row = document.createElement("tr");
 
       // Category cell
@@ -58,4 +81,6 @@ fetch(csvFilePath)
       tableBody.appendChild(row);
     });
   })
-  .catch(error => console.error("Error loading CSV file:", error));
+  .catch(error => {
+    logDebug(`Error loading CSV file: ${error}`);
+  });
