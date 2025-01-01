@@ -10,16 +10,26 @@ async function fetchData() {
             .filter(row => row.trim() !== '') // Remove empty rows
             .map(row => {
                 const [category, date] = row.split(',');
-                const parsedDate = new Date(date.trim());
-                const daysUntil = calculateDaysUntil(today, parsedDate);
+                const parsedDate = parseDate(date.trim());
+                const daysUntil = parsedDate ? calculateDaysUntil(today, parsedDate) : null;
 
-                return { category: category.trim(), date: parsedDate, daysUntil };
+                return { 
+                    category: category.trim(), 
+                    date: parsedDate, 
+                    daysUntil 
+                };
             });
 
         displayData(parsedRows);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
+}
+
+// Custom function to parse DD-MM-YYYY dates
+function parseDate(dateString) {
+    const [day, month, year] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // JavaScript months are 0-based
 }
 
 function calculateDaysUntil(today, futureDate) {
@@ -42,8 +52,8 @@ function displayData(data) {
                 ${data.map(item => `
                     <tr>
                         <td>${item.category}</td>
-                        <td>${item.date.toDateString()}</td>
-                        <td>${item.daysUntil >= 0 ? item.daysUntil : 'Passed'}</td>
+                        <td>${item.date ? item.date.toDateString() : 'Invalid Date'}</td>
+                        <td>${item.daysUntil !== null ? (item.daysUntil >= 0 ? item.daysUntil : 'Passed') : 'N/A'}</td>
                     </tr>
                 `).join('')}
             </tbody>
